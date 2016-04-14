@@ -45,7 +45,7 @@ int bl_read(int drive, int numblock, int count, char *buf)
 	io.outb(0x1F7, 0x20);
 
 	bl_wait(0x1F0);
-	while (!(io.inb(0x1F7) & 0x08));
+	while ((io.inb(0x1F7) & 0xc0) != 0x40);
 
 	for (idx = 0; idx < 256 * count; idx++) {
 		tmpword = io.inw(0x1F0);
@@ -67,7 +67,7 @@ int bl_write(int drive, int numblock, int count, char *buf)
 	io.outb(0x1F7, 0x30);
 	bl_wait(0x1F0);
 	/* Wait for the drive to signal that it's ready: */
-	while (!(io.inb(0x1F7) & 0x08));
+	while ((io.inb(0x1F7) & 0xc0) != 0x40);
 
 	for (idx = 0; idx < 256 * count; idx++) {
 		tmpword = (buf[idx * 2 + 1] << 8) | buf[idx * 2];

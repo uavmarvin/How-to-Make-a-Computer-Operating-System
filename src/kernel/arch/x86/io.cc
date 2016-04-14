@@ -148,6 +148,7 @@ void Io::clear(){
 	x=0;
 	y=0;
 	memset((char*)RAMSCREEN,0,SIZESCREEN);
+	real_screen = (char*)RAMSCREEN;
 }
 
 /* put a string in screen */
