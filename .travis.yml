@@ -1,6 +1,8 @@
 language: cpp
 compiler:
   - gcc
+before_install:
+  - sudo apt-get install nasm 
 script:
   - cd src
   - make all
