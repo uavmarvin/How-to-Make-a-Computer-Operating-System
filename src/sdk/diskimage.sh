@@ -1,6 +1,6 @@
 #!/bin/bash
-#qemu-img create c.img 2M
-dd if=/dev/zero of=c.img count=40320
+qemu-img create c.img 20M
+#dd if=/dev/zero of=c.img count=40320
 fdisk ./c.img  << EOF
 x
 s
