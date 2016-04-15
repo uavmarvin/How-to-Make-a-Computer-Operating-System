@@ -1,6 +1,8 @@
 How to Make a Computer Operating System
 =======================================
 
+[![Join the chat at https://gitter.im/uavmarvin/How-to-Make-a-Computer-Operating-System](https://badges.gitter.im/uavmarvin/How-to-Make-a-Computer-Operating-System.svg)](https://gitter.im/uavmarvin/How-to-Make-a-Computer-Operating-System?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/uavmarvin/How-to-Make-a-Computer-Operating-System.svg?branch=master)](https://travis-ci.org/uavmarvin/How-to-Make-a-Computer-Operating-System)
 
 Online book about how to write a computer operating system in C/C++ from scratch.
