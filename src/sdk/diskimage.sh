@@ -21,19 +21,12 @@ w
 EOF
 
 fdisk -l -u ./c.img
-sudo losetup -o 1048576 /dev/loop1 ./c.img
-
-sudo mkfs.ext2 /dev/loop1
-sudo mkdir -p /mnt/loop1
-sudo mount /dev/loop1 /mnt/loop1
-sudo cp -R bootdisk/* /mnt/loop1
-sudo umount /mnt/loop1
-sudo rmdir /mnt/loop1
-sudo losetup -d /dev/loop1
-grub --device-map=/dev/null << EOF
-device (hd0) ./c.img
-geometry (hd0) 40 16 63
-root (hd0,0)
-setup (hd0)
-quit
-EOF
+sudo kpartx -av ./c.img
+sudo mkfs.ext2 /dev/mapper/loop0p1
+sudo mkdir -p /mnt/img
+sudo mount /dev/mapper/loop0p1 /mnt/img
+sudo grub-install --no-floppy --root-directory=/mnt/img --boot-directory=/mnt/img/boot /dev/loop0
+sudo cp -R bootdisk/* /mnt/img
+sudo umount /mnt/img
+sudo rmdir /mnt/img
+sudo kpartx -d ./c.img
