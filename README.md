@@ -5,6 +5,18 @@ How to Make a Computer Operating System
 
 [![Build Status](https://travis-ci.org/uavmarvin/How-to-Make-a-Computer-Operating-System.svg?branch=master)](https://travis-ci.org/uavmarvin/How-to-Make-a-Computer-Operating-System)
 
+### Quick Setup
+
+```Shell
+git clone https://github.com/uavmarvin/How-to-Make-a-Computer-Operating-System.git
+sudo apt-get install nasm qemu
+cd src
+make all
+make run
+```
+
+### More Information
+
 Online book about how to write a computer operating system in C/C++ from scratch.
 
 **Caution**: This repository is a remake of my old course. It was written several years ago [as one of my first projects when I was in High School](https://github.com/SamyPesse/devos), I'm still refactoring some parts. The original course was in French and I'm not an English native. I'm going to continue and improve this course in my free-time.
