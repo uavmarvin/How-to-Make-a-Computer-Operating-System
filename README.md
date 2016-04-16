@@ -15,6 +15,22 @@ make all
 make run
 ```
 
+#### Debug
+
+**Kernel**
+```Shell
+cd src/kernel
+gdb ./kernel.elf
+target remote localhost:1234
+```
+
+**Helloworld**
+```Shell
+cd src/userland/helloworld
+gdb ./hello
+target remote localhost:1234
+```
+
 ### More Information
 
 Online book about how to write a computer operating system in C/C++ from scratch.
