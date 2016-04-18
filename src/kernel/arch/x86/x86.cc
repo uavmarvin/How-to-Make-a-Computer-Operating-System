@@ -358,6 +358,7 @@ void init_idt(void)
 	init_idt_desc(0x08, (u32) _asm_int_1, INTGATE, &kidt[33]);
 	
 	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[48]);
+	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[80]);
 	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[128]); //48
 	
 	kidtr.limite = IDTSIZE * 8;
