@@ -4,8 +4,5 @@
 #include <stdio.h>
 
 int puts( const char* s ) {
-    printf("%s\n", s );
-    //fflush( stdout );
-
-    return 0;
+	return supcon_puts((unsigned char*)s);
 }
