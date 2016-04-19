@@ -189,7 +189,7 @@ void isr_kbd_int(void)
 			break;
 		default:
 		
-				if(alt_enable==1)
+				if(kbdmap == kbdmap_fr && alt_enable == 1)
 				{
 					io.putctty(kbdmap[i * 4 + 2]);
 					if (&io != io.current_io)
@@ -199,16 +199,16 @@ void isr_kbd_int(void)
 				else if(lshift_enable == 1 || rshift_enable == 1)
 				{
 		 
-					 io.putctty(kbdmap[i * 4 + 1]);
-					 if (&io != io.current_io)
+					io.putctty(kbdmap[i * 4 + 1]);
+					if (&io != io.current_io)
 						io.current_io->putctty(kbdmap[i * 4 + 1]);
 		 
 				}
 				else
 				{
-						  io.putctty(kbdmap[i * 4]);
-					 if (&io != io.current_io)
-					 io.current_io->putctty(kbdmap[i * 4]);
+					io.putctty(kbdmap[i * 4]);
+					if (&io != io.current_io)
+						io.current_io->putctty(kbdmap[i * 4]);
 		 
 				}
                break;
