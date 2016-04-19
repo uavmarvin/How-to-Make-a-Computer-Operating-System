@@ -10,7 +10,7 @@ How to Make a Computer Operating System
 ```Shell
 git clone https://github.com/uavmarvin/How-to-Make-a-Computer-Operating-System.git
 sudo apt-get install nasm qemu
-cd src
+cd How-to-Make-a-Computer-Operating-System/src
 make all
 make run
 ```
