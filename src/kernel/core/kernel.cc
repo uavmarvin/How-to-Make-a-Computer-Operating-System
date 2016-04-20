@@ -57,7 +57,7 @@ extern "C" void kmain(multiboot_info* mbi){
 	modm.install("hda1","module.dospartition",1,"/dev/hda");
 	modm.install("hda2","module.dospartition",2,"/dev/hda");
 	modm.install("hda3","module.dospartition",3,"/dev/hda");
-	modm.mount("/dev/hda0","/mnt/boot","module.ext2",NO_FLAG);
+	modm.mount("/dev/hda0","boot","module.ext2",NO_FLAG);
 
 	arch.initProc();
 	

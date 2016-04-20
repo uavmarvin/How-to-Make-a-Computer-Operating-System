@@ -10,7 +10,8 @@
  */
 int bl_wait(unsigned short base)
 {
-	while(io.inb(base+0x206) & 0x80);
+	for (int i = 0; i < 4; i++) io.inb(base+0x7); /* 400ns delays */
+	while ((io.inb(base+0x7) & 0xC0) != 0x40);
 	return 0;	
 }
 
@@ -20,12 +21,14 @@ int bl_wait(unsigned short base)
 int bl_common(int drive, int numblock, int count)
 {
 	bl_wait(0x1F0);
+	io.outb(0x1F0+0x206, 0x02);
+	bl_wait(0x1F0);
 	
 	io.outb(0x1F1, 0x00);	/* NULL byte to port 0x1F1 */
 	io.outb(0x1F2, count);	/* Sector count */
-	io.outb(0x1F3, (unsigned char) numblock);	/* Low 8 bits of the block address */
-	io.outb(0x1F4, (unsigned char) (numblock >> 8));	/* Next 8 bits of the block address */
-	io.outb(0x1F5, (unsigned char) (numblock >> 16));	/* Next 8 bits of the block address */
+	io.outb(0x1F3, (unsigned char) (numblock & 0xFF));	/* Low 8 bits of the block address */
+	io.outb(0x1F4, (unsigned char) ((numblock >> 8) & 0xFF));	/* Next 8 bits of the block address */
+	io.outb(0x1F5, (unsigned char) ((numblock >> 16) & 0xFF));	/* Next 8 bits of the block address */
 
 	/* Drive indicator, magic bits, and highest 4 bits of the block address */
 	io.outb(0x1F6, 0xE0 | (drive << 4) | ((numblock >> 24) & 0x0F));
@@ -40,17 +43,23 @@ int bl_read(int drive, int numblock, int count, char *buf)
 {
 	u16 tmpword;
 	int idx;
-
+	
 	bl_common(drive, numblock, count);
 	io.outb(0x1F7, 0x20);
-
-	bl_wait(0x1F0);
-	while ((io.inb(0x1F7) & 0xc0) != 0x40);
-
-	for (idx = 0; idx < 256 * count; idx++) {
-		tmpword = io.inw(0x1F0);
-		buf[idx * 2] = (unsigned char) tmpword;
-		buf[idx * 2 + 1] = (unsigned char) (tmpword >> 8);
+	
+	for (int i = 0; i < count; i++)
+	{
+		/* wait for hard disk buffer ready */
+		for (int i = 0; i < 4; i++) io.inb(0x1F7); /* 400ns delays */
+		while ((io.inb(0x1F7) & 0x88) != 0x08);
+		
+		for (int j = 0; j < 256; j ++)
+		{
+			idx = i * 256 + j;
+			tmpword = io.inw(0x1F0);
+			buf[idx * 2] = (unsigned char) tmpword;
+			buf[idx * 2 + 1] = (unsigned char) (tmpword >> 8);
+		}
 	}
 	return count;
 }
@@ -65,14 +74,22 @@ int bl_write(int drive, int numblock, int count, char *buf)
 
 	bl_common(drive, numblock, count);
 	io.outb(0x1F7, 0x30);
-	bl_wait(0x1F0);
-	/* Wait for the drive to signal that it's ready: */
-	while ((io.inb(0x1F7) & 0xc0) != 0x40);
-
-	for (idx = 0; idx < 256 * count; idx++) {
-		tmpword = (buf[idx * 2 + 1] << 8) | buf[idx * 2];
-		io.outw(0x1F0, tmpword);
+	
+	for (int i = 0; i < count; i++)
+	{
+		/* Wait for the drive to signal that it's ready: */
+		for (int i = 0; i < 4; i++) io.inb(0x1F7); /* 400ns delays */
+		while ((io.inb(0x1F7) & 0x88) != 0x08);
+		
+		for (int j = 0; j < 256; j++)
+		{
+			idx = i * 256 + j;
+			tmpword = (buf[idx * 2 + 1] << 8) | buf[idx * 2];
+			io.outw(0x1F0, tmpword);
+		}
 	}
+	
+	io.outb(0x1F7, 0xE7); /* flush cache */
 
 	return count;
 }
