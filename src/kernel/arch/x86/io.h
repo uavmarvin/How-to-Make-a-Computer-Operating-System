@@ -54,6 +54,8 @@ class Io
 		void	putc(char c);				/* put a byte on screen */
 		void	setColor(char fcol,char bcol);	/* change colors */
 		void	setXY(char xc,char yc);			/* change cursor position */
+		void	updateCursor();
+		void	enableCursor();
 		void	clear();				/* clear screen */
 		void	print(const char *s, ...);	/* put a string in screen */
 		
@@ -96,6 +98,7 @@ class Io
 		char	y;				/* console y position */
 		char kattr;				/* console attribut */
 		static char*	vidmem;	/* screen video memory */
+		
 		
 };
 

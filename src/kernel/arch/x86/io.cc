@@ -63,24 +63,26 @@ u32	Io::getY(){
 /* x86 scroll up screen */
 void Io::scrollup(unsigned int n)
 {
-		unsigned char *video, *tmp;
+	unsigned char *video, *tmp;
 
-		for (video = (unsigned char *) real_screen;
-		     video < (unsigned char *) SCREENLIM; video += 2) {
-			tmp = (unsigned char *) (video + n * 160);
+	for (video = (unsigned char *) real_screen;
+	video < (unsigned char *) SCREENLIM; video += 2) {
+		tmp = (unsigned char *) (video + n * 160);
 
-			if (tmp < (unsigned char *) SCREENLIM) {
-				*video = *tmp;
-				*(video + 1) = *(tmp + 1);
-			} else {
-				*video = 0;
-				*(video + 1) = 0x07;
-			}
+		if (tmp < (unsigned char *) SCREENLIM) {
+			*video = *tmp;
+			*(video + 1) = *(tmp + 1);
+		} else {
+			*video = 0;
+			*(video + 1) = 0x07;
 		}
+	}
 
-		y -= n;
-		if (y < 0)
-			y = 0;
+	y -= n;
+	if (y < 0)
+		y = 0;
+	
+	updateCursor();
 }
 
 /* sauvegarde la memoire video */
@@ -130,8 +132,10 @@ void Io::putc(char c){
 			y++;
 		}
 	}
-			if (y > 24)
-				scrollup(y - 24);
+	if (y > 24)
+		scrollup(y - 24);
+	
+	updateCursor();
 }
 
 /* change colors */
@@ -144,6 +148,28 @@ void Io::setColor(char fcol,char bcol){
 void Io::setXY(char xc,char yc){
 	x=xc;
 	y=yc;
+	updateCursor();
+}
+
+void Io::updateCursor()
+{
+	unsigned short position = (y * 80) + x;
+	 
+	// cursor LOW port to vga INDEX register
+	outb(0x03D4, 0x0F);
+	outb(0x03D5, (unsigned char)(position & 0xFF));
+	// cursor HIGH port to vga INDEX register
+	outb(0x03D4, 0x0E);
+	outb(0x03D5, (unsigned char)((position >> 8) & 0xFF));
+}
+
+void Io::enableCursor()
+{
+	outb(0x3D4, 0x0A);
+	char curstart = inb(0x3D5) & 0x1F; // get cursor scanline start
+
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, curstart & ~0x20); // set enable bit
 }
 
 /* clear screen */
@@ -152,6 +178,7 @@ void Io::clear(){
 	y=0;
 	memset((char*)RAMSCREEN,0,SIZESCREEN);
 	real_screen = (char*)RAMSCREEN;
+	updateCursor();
 }
 
 /* put a string in screen */
@@ -248,7 +275,7 @@ void Io::print(const char *s, ...){
 		} else
 			putc(c);
 	}
-
+	updateCursor();
 	return;
 }
 
