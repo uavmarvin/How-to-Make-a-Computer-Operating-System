@@ -38,7 +38,7 @@ int fgetc( FILE* stream ) {
     if ( stream->buffer_pos >= stream->buffer_data_size ) {
         ssize_t length;
 
-        length = read( stream->fd, stream->buffer, stream->buffer_size );
+        length = read( stream->fd, stream->buffer, 1);
         if ( length == 0 ) {
             stream->flags |= __FILE_EOF;
             printf("EOF ! \n");
