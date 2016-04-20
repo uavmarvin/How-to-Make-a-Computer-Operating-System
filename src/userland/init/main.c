@@ -14,7 +14,7 @@ int main(int argc,char **argv){
 	{
 		/* child process */
 	//      static char *argv[]={"echo","Foo is my name.",NULL};
-		execv("/bin/hello", argv);
+		execv("/bin/sh", argv);
 		exit(127); /* only if execv fails */
 	}
 	else
