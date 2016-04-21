@@ -2,10 +2,12 @@ language: cpp
 compiler:
   - gcc
 before_install:
-  - sudo apt-get install nasm 
+  - sudo apt-get install -y nasm kpartx
 script:
   - cd src
   - make all
+  - cd sdk
+  - ./diskimage.sh
 notifications:
   webhooks:
     urls:
