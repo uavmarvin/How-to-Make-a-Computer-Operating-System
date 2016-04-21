@@ -14,6 +14,12 @@ Once Virtualbox is installed, you need to download the Ubuntu Trusty image at ht
 
 Create new virtual machine in your Virtualbox and install Ubuntu Trusty with image.
 
+Install prerequisites our environment needs:
+
+```Shell
+sudo apt-get install -y nasm qemu kpartx grub-pc
+```
+
 #### Build and test our operating system
 
 The file [**Makefile**](https://github.com/uavmarvin/How-to-Make-a-Computer-Operating-System/blob/master/src/Makefile) defines some basics rules for building the kernel, the user libc and some userland programs.
