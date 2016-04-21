@@ -3,6 +3,20 @@ dist: trusty
 language: cpp
 compiler:
   - gcc
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "K+POYj3ZqowiQuVxwmwjj8EfTYF2gLFi805y5ER8Akt7Cpns+IXfaWGCT/KS9Jr4yNXQKeqaLjV1bJClfVbZUaIlsrYmZrePdAGRztp+2Z7bXmRFYGugdglvkAaIWdW6n+Sqt+ouw8nouc0Hp1P3I7OooVjWN/ywNfCASI3gDw/Co98rf3mWutz3cLHngzX9A1t9yMIsOepdT56CQIU5GvC6QWygV4tuRDTtCqylbJhi2SGVeL89D0le9U3/+eg6rjFBKSxWqK41iffWw7Wh5COAycK+yZ9c5B0PZXdm4EX1SR9F8C3YQZkwv72ZlrAJJ0dP4RuPVMg3F7xOWfzK/t/Gg+aj2UtNp9zJf8W8xKHy/bGc5Kfin8YtEOWKCWQ+olmdkTlG8h+AEclIU9VRy0My7Hquw5R+Ye21N6pZqABBTb2rrKtMV4sz/Ll2VGQiNXGlGykGDgmXxmXWVU0MWLPnMlf3fNzWF1Nu5HL5523gi9jqbOwPU94LUIhHqFvgTVRkYoaRUKsh6TqOPnKTfol1MK6p8XfWdFTzdtNpOf5U9koxOJCqXd+b26+KodzOSA1JpSFJeUBTufOGjlQ7ENvP7ExJpWeF+YnGq3XuvSyFBqq51UG/YrAxs4I7bn33oLRLBkknO73knMnaxpnxTS6tG+dEE1dxhuetXYoSiKA="
+addons:
+  coverity_scan:
+    project:
+      name: "uavmarvin/How-to-Make-a-Computer-Operating-System"
+      description: "<Your project description here>"
+    notification_email: hycwuy@gmail.com
+    build_command_prepend: "cd src && make clean"
+    build_command:   "make all"
+    branch_pattern: master
 before_install:
   - sudo apt-get install -y nasm kpartx qemu grub-pc
 script:
