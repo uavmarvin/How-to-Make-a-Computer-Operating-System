@@ -27,15 +27,8 @@ sudo kpartx -av ./c.img
 sudo mkfs.ext2 /dev/mapper/loop0p1
 sudo mkdir -p /mnt/img
 sudo mount /dev/mapper/loop0p1 /mnt/img
-sudo grub-install --no-floppy --root-directory=/mnt/img --boot-directory=/mnt/img/boot /dev/loop0
+sudo grub-install --target=i386-pc --no-floppy --root-directory=/mnt/img --boot-directory=/mnt/img/boot /dev/loop0
 sudo cp -R bootdisk/* /mnt/img
 sudo umount /mnt/img
 sudo rmdir /mnt/img
 sudo kpartx -d ./c.img
-
-if [ -f "./c.img" ]
-then
-	exit 0
-else
-	exit 1
-fi

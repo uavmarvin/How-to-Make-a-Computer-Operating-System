@@ -6,6 +6,8 @@ How to Make a Computer Operating System
 
 ### Quick Setup
 
+Tested in Ubuntu 14.04 LTS (Trusty)
+
 ```Shell
 git clone https://github.com/uavmarvin/How-to-Make-a-Computer-Operating-System.git
 sudo apt-get install -y nasm qemu kpartx grub-pc
