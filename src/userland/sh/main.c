@@ -8,14 +8,30 @@
 
 int main(int argc,char **argv)
 {
+	int x = 0;
 	char c;
 	printf("> ");
 	fflush(stdout);
+	x = 2;
 	while (1)
 	{
 		c = getchar();
-		printf("%c", c);
-		if ('\n' == c) printf("> ");
+		if (c == 0x08)
+		{
+			if (x == 2)
+				continue;
+			else
+			{
+				printf("%c", c);
+				x--;
+			}
+		}
+		else
+		{
+			printf("%c", c);
+			x++;
+		}
+		if ('\n' == c){printf("> "); x = 2;}
 		fflush(stdout);
 	}
 	//Shell sh;

@@ -113,13 +113,23 @@ void Io::putc(char c){
 	if (c == 10) {			
 		x = 0;
 		y++;
-	} else if (c == 8) {	
+	} else if (c == 8) { /* backspace */
 		if (x) {
-				*(video + 1) = 0x0;
+			*(video - 1)= 0x0;
+			*(video - 2) = 0x0;
 			x--;
+		} else if (y) {
+			*(video - 1)= 0x0;
+			*(video - 2) = 0x0;
+			x = 79;
+			y--;
 		}
-	} else if (c == 9) {	
+	} else if (c == 9) { /* horizontal tab */
 		x = x + 8 - (x % 8);
+		if (x > 79) {
+			x = 0;
+			y++;
+		}
 	} else if (c == 13) {	
 		x = 0;
 	} else {		
