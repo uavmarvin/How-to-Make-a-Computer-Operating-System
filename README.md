@@ -35,7 +35,7 @@ target remote localhost:1234
 
 ### More Information
 
-**Source Code**: All the system source code will be stored in the [src](https://github.com/uavmarvin/How-to-Make-a-Computer-Operating-System/tree/master/src) directory. Each step will contain links to the different related files.
+**Source Code**: All the system source code will be stored in the [src](src) directory. Each step will contain links to the different related files.
 
 **Contributions**: Is is open to contributions, feel free to signal errors with issues or directly correct the errors with pull-requests.
 
