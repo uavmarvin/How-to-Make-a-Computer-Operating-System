@@ -2,7 +2,7 @@ language: cpp
 compiler:
   - gcc
 before_install:
-  - sudo apt-get install -y nasm kpartx qemu
+  - sudo apt-get install -y nasm kpartx qemu grub-pc
 script:
   - cd src
   - make all
