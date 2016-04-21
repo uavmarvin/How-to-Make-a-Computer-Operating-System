@@ -63,7 +63,7 @@ We are going to store our GDT at the address:
 #define GDTBASE	0x00000800
 ```
 
-The function **init_gdt_desc** in [x86.cc](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/arch/x86/x86.cc) initialize a gdt segment descriptor.
+The function **init_gdt_desc** in [x86.cc](../src/kernel/arch/x86/x86.cc) initialize a gdt segment descriptor.
 
 ```cpp
 void init_gdt_desc(u32 base, u32 limite, u8 acces, u8 other, struct gdtdesc *desc)

@@ -4,7 +4,7 @@
 
 A kernel can be written in C++ just as it can be in C, with the exception of a few pitfalls that come with using C++ (runtime support, constructors, etc). 
 
-The compiler will assume that all the necessary C++ runtime support is available by default, but as we are not linking libsupc++ into your C++ kernel, we need to add some basic functions that can be found in the [cxx.cc](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/runtime/cxx.cc) file.
+The compiler will assume that all the necessary C++ runtime support is available by default, but as we are not linking libsupc++ into your C++ kernel, we need to add some basic functions that can be found in the [cxx.cc](../src/kernel/runtime/cxx.cc) file.
 
 **Caution:** The operators `new` and `delete` cannot be used before virtual memory and pagination have been initialized.
 
@@ -26,7 +26,7 @@ char *	strncpy(char *destString, const char *sourceString,int maxLength);
 int 	strncmp( const char* s1, const char* s2, int c );
 ```
 
-These functions are defined in [string.cc](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/runtime/string.cc), [memory.cc](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/runtime/memory.cc), [itoa.cc](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/runtime/itoa.cc)
+These functions are defined in [string.cc](../src/kernel/runtime/string.cc), [memory.cc](../src/kernel/runtime/memory.cc), [itoa.cc](../src/kernel/runtime/itoa.cc)
 
 #### C types
 
@@ -48,7 +48,7 @@ typedef signed long long	s64;
 
 Compiling a kernel is not the same thing as compiling a linux executable, we can't use a standard library and should have no dependencies to the system.
 
-Our [Makefile](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/Makefile) will define the process to compile and link our kernel.
+Our [Makefile](../src/kernel/Makefile) will define the process to compile and link our kernel.
 
 For x86 architecture, the followings arguments will be used for gcc/g++/ld:
 

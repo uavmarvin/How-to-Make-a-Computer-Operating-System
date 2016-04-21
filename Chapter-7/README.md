@@ -210,7 +210,7 @@ It is used to define in which mode the controller should work.
 
 #### Why do idt segments offset our ASM functions?
 
-You should have noticed that when I'm initializing our IDT segments, I'm using offsets to segment the code in Assembly. The different functions are defined in [x86int.asm](https://github.com/SamyPesse/How-to-Make-a-Computer-Operating-System/blob/master/src/kernel/arch/x86/x86int.asm) and are of the following scheme:
+You should have noticed that when I'm initializing our IDT segments, I'm using offsets to segment the code in Assembly. The different functions are defined in [x86int.asm](../src/kernel/arch/x86/x86int.asm) and are of the following scheme:
 
 ```asm
 %macro	SAVE_REGS 0
