@@ -32,3 +32,10 @@ sudo cp -R bootdisk/* /mnt/img
 sudo umount /mnt/img
 sudo rmdir /mnt/img
 sudo kpartx -d ./c.img
+
+if [ -f "./c.img" ]
+then
+	exit 0
+else
+	exit 1
+fi
