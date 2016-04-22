@@ -1,7 +1,7 @@
 #include <os.h>
 
 /* Stack pointer */
-extern u32 *           stack_ptr;
+extern regs_t*           stack_ptr;
 
 Io* Io::last_io=&io;		/* definis la derniere io avant switch */
 Io* Io::current_io=&io;		/* interface actuel (clavier redirigé vers celle ci) */
@@ -323,7 +323,7 @@ u32 Io::read(char* buf,u32 count){
 	else{	//getchar
 		keystate=GETCHAR;
 	}
-	u32* stack_pointer = stack_ptr;/* save stack pointer */
+	regs_t* stack_pointer = stack_ptr;/* save stack pointer */
 	asm("sti");
 	inlock=1;
 	while (inlock == 1);

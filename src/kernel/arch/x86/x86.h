@@ -96,18 +96,18 @@ struct idtr {
 
 typedef struct
 {
+	u32 gs, fs, es, ds;
 	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	u32 ds, es, fs, gs;
 	u32 which_int, err_code;
 	u32 eip, cs, eflags, user_esp, user_ss;
 } __attribute__((packed)) regs_t;
 
-typedef void (*int_desc)(void);
+typedef void (*interrupt_handler_t)(regs_t *);
 
 extern "C" {
 	void init_gdt_desc(u32, u32, u8, u8, struct gdtdesc *);
 	void init_gdt(void);
-	void init_idt_desc(u16, u32, u16, struct idtdesc *);
+	void init_idt_desc(u8, u16, u32, u16);
 	void init_idt(void);
 	void init_pic(void);
 	int install_irq(unsigned int num,unsigned int irq);

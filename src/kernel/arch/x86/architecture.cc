@@ -2,7 +2,7 @@
 #include <x86.h>
 
 /* Stack pointer */
-extern u32 *		stack_ptr;
+extern regs_t*		stack_ptr;
 
 /* Current cpu name */
 static char cpu_name[512] = "x86-noname";
@@ -333,5 +333,5 @@ u32	Architecture::getArg(u32 n){
 
 /* Set the return value of syscall */
 void Architecture::setRet(u32 ret){
-	stack_ptr[14] = ret;
+	stack_ptr->eax = ret;
 }

@@ -46,15 +46,15 @@ u32 cpu_vendor_name(char *name)
 }
 
 
-void schedule();
+void schedule(regs_t*);
 
 idtdesc 	kidt[IDTSIZE]; 		/* IDT table */
-int_desc 	intt[IDTSIZE]; 		/* Interruptions functions tables */
+interrupt_handler_t interrupt_handlers[IDTSIZE]; 		/* Interruptions functions tables */
 gdtdesc 	kgdt[GDTSIZE];		/* GDT */
 tss 		default_tss;
 gdtr 		kgdtr;				/* GDTR */
 idtr 		kidtr; 				/* IDTR registry */
-u32 *		stack_ptr=0;
+regs_t*		stack_ptr = 0;
 
 /*
  * 'init_desc' initialize a segment descriptor in gdt or ldt.
@@ -118,47 +118,28 @@ void init_gdt(void)
 }
 
 
-void init_idt_desc(u16 select, u32 offset, u16 type, struct idtdesc *desc)
+void init_idt_desc(u8 num, u16 select, u32 offset, u16 type)
 {
-	desc->offset0_15 = (offset & 0xffff);
-	desc->select = select;
-	desc->type = type;
-	desc->offset16_31 = (offset & 0xffff0000) >> 16;
+	kidt[num].offset0_15 = (offset & 0xffff);
+	kidt[num].select = select;
+	kidt[num].type = type;
+	kidt[num].offset16_31 = (offset & 0xffff0000) >> 16;
 	return;
 }
 
-extern void _asm_int_0();
-extern void _asm_int_1();
-extern void _asm_syscalls();
-extern void _asm_exc_GP(void);
-extern void _asm_exc_PF(void);
-extern void _asm_schedule();
-
-void do_syscalls(int num){
-	 u32 ret,ret1,ret2,ret3,ret4;
-	 asm("mov %%ebx, %0": "=m"(ret):);
-	 asm("mov %%ecx, %0": "=m"(ret1):);
-	 asm("mov %%edx, %0": "=m"(ret2):);
-	 asm("mov %%edi, %0": "=m"(ret3):);
-	 asm("mov %%esi, %0": "=m"(ret4):);
-	 //io.print("syscall %d \n",num);
-	 /*io.print(" ebx : %x  ",ret);
-	 io.print(" ecx : %x \n",ret1);
-	 io.print(" edx : %x  ",ret2);
-	 io.print(" edi : %x \n",ret3);*/
-	   
-	 arch.setParam(ret,ret1,ret2,ret3,ret4);
-	 asm("cli");
-	 asm("mov %%ebp, %0": "=m"(stack_ptr):);
-
+void isr_syscalls_int(regs_t* regs_ptr)
+{
+	 arch.setParam(regs_ptr->ebx, regs_ptr->ecx, regs_ptr->edx, regs_ptr->edi, regs_ptr->esi);
 	 
-	 syscall.call(num);
+	 asm("cli");
+	 stack_ptr = regs_ptr;
+	 syscall.call(regs_ptr->eax);
 	 asm("sti");
 }
 
 
 
-void isr_kbd_int(void)
+void isr_keyboard_int(regs_t* regs_ptr)
 {
 	u8 i;
 	static int lshift_enable;
@@ -237,52 +218,37 @@ void isr_kbd_int(void)
 		}
 	}
 	
-		io.outb(0x20,0x20);
-		io.outb(0xA0,0x20); 
-}
-
-
-void isr_default_int(int id)
-{
-	static int tic = 0;
-	static int sec = 0;
-	switch (id){
-		case 1:
-			isr_kbd_int();
-			break;
-			
-			
-		default:
-			return;
-		
-	}
-	
 	io.outb(0x20,0x20);
-	io.outb(0xA0,0x20);
+	io.outb(0xA0,0x20); 
 }
 
-
-void isr_schedule_int()
+void isr_schedule_int(regs_t* regs_ptr)
 {
 	static int tic = 0;
 	static int sec = 0;
-		tic++;
-		if (tic % 100 == 0) {
+	tic++;
+	if (tic % 100 == 0) {
 		sec++;
 		tic = 0;
 	}
-	schedule();
+	schedule(regs_ptr);
 	io.outb(0x20,0x20);
 	io.outb(0xA0,0x20);
 }
 
-void isr_GP_exc(void)
+void isr_GP_int(regs_t* regs_ptr)
 {
+	u32 faulting_addr;
+	 asm("mov %%cr2, %%eax	\n \
+		mov %%eax, %0"
+		: "=m"(faulting_addr));
 	io.print("\n General protection fault !\n");
+	io.print("No autorized memory acces on : %p (eip:%p,code:%p)\n", faulting_addr, regs_ptr->eip,  regs_ptr->cs);
+	
 	if (arch.pcurrent!=NULL){
 		io.print("The processus %s have to be killed !\n\n",(arch.pcurrent)->getName());
 		(arch.pcurrent)->exit();
-		schedule();
+		schedule(regs_ptr);
 	}
 	else{
 		io.print("The kernel have to be killed !\n\n");
@@ -290,28 +256,23 @@ void isr_GP_exc(void)
 	}
 }
 
-void isr_PF_exc(void)
+void isr_PF_int(regs_t* regs_ptr)
 {
-	u32 faulting_addr, code;
-	u32 eip;
+	u32 faulting_addr;
 	struct page *pg;
 	u32 stack;
- 	asm(" 	movl 60(%%ebp), %%eax	\n \
-    		mov %%eax, %0		\n \
-		mov %%cr2, %%eax	\n \
-		mov %%eax, %1		\n \
- 		movl 56(%%ebp), %%eax	\n \
-    		mov %%eax, %2"
-		: "=m"(eip), "=m"(faulting_addr), "=m"(code));
-	 asm("mov %%ebp, %0": "=m"(stack):);
+ 	asm("mov %%cr2, %%eax	\n \
+		mov %%eax, %0"
+		: "=m"(faulting_addr));
+	asm("mov %%ebp, %0": "=m"(stack):);
 	
 	//io.print("#PF : %x \n",faulting_addr);
 	
 	//for (;;);
-		if (arch.pcurrent==NULL)
-			return;
+	if (arch.pcurrent==NULL)
+		return;
 			
-		process_st* current=arch.pcurrent->getPInfo();
+	process_st* current=arch.pcurrent->getPInfo();
 
 	if (faulting_addr >= USER_OFFSET && faulting_addr <= USER_STACK) {
 		pg = (struct page *) kmalloc(sizeof(struct page));
@@ -322,13 +283,13 @@ void isr_PF_exc(void)
 	}
 	else {
 		io.print("\n");
-		io.print("No autorized memory acces on : %p (eip:%p,code:%p)\n", faulting_addr,eip,  code);
+		io.print("No autorized memory acces on : %p (eip:%p,code:%p)\n", faulting_addr, regs_ptr->eip,  regs_ptr->cs);
 		io.print("heap=%x, heap_limit=%x, stack=%x\n",kern_heap,KERN_HEAP_LIM,stack);
 		
 		if (arch.pcurrent!=NULL){
 			io.print("The processus %s have to be killed !\n\n",(arch.pcurrent)->getName());
 			(arch.pcurrent)->exit();
-			schedule();
+			schedule(regs_ptr);
 		}
 		else{
 			io.print("The kernel have to be killed !\n\n");
@@ -338,7 +299,48 @@ void isr_PF_exc(void)
 		
 }
 
+void isr0();
+void isr1();
+void isr2();
+void isr3();
+void isr4();
+void isr5();
+void isr6();
+void isr7();
+void isr8();
+void isr9();
+void isr10();
+void isr11();
+void isr12();
+void isr13();
+void isr14();
+void isr15();
+void isr16();
+void isr17();
+void isr18();
+void isr19();
+void isr20();
+void isr21();
+void isr22();
+void isr23();
+void isr24();
+void isr25();
+void isr26();
+void isr27();
+void isr28();
+void isr29();
+void isr30();
+void isr31();
+void isr32();
+void isr33();
+void isr48();
+void isr80();
+void isr128();
 
+void register_interrupt_handler(u8 n, interrupt_handler_t h)
+{
+	interrupt_handlers[n] = h;
+}
 
 /*
  * Init IDT after kernel is loaded
@@ -346,20 +348,56 @@ void isr_PF_exc(void)
 void init_idt(void)
 {
 	/* Init irq */
-	int i;
-	for (i = 0; i < IDTSIZE; i++) 
-		init_idt_desc(0x08, (u32)_asm_schedule, INTGATE, &kidt[i]); // 
+	memset((char*)interrupt_handlers, 0, sizeof(interrupt_handler_t) * IDTSIZE);
+	memset((char*)kidt, 0, sizeof(idtdesc) * IDTSIZE);
 	
 	/* Vectors  0 -> 31 are for exceptions */
-	init_idt_desc(0x08, (u32) _asm_exc_GP, INTGATE, &kidt[13]);		/* #GP */
-	init_idt_desc(0x08, (u32) _asm_exc_PF, INTGATE, &kidt[14]);     /* #PF */
+	init_idt_desc( 0, 0x08, (u32)isr0,  INTGATE);
+	init_idt_desc( 1, 0x08, (u32)isr1,  INTGATE);
+	init_idt_desc( 2, 0x08, (u32)isr2,  INTGATE);
+	init_idt_desc( 3, 0x08, (u32)isr3,  INTGATE);
+	init_idt_desc( 4, 0x08, (u32)isr4,  INTGATE);
+	init_idt_desc( 5, 0x08, (u32)isr5,  INTGATE);
+	init_idt_desc( 6, 0x08, (u32)isr6,  INTGATE);
+	init_idt_desc( 7, 0x08, (u32)isr7,  INTGATE);
+	init_idt_desc( 8, 0x08, (u32)isr8,  INTGATE);
+	init_idt_desc( 9, 0x08, (u32)isr9,  INTGATE);
+	init_idt_desc(10, 0x08, (u32)isr10, INTGATE);
+	init_idt_desc(11, 0x08, (u32)isr11, INTGATE);
+	init_idt_desc(12, 0x08, (u32)isr12, INTGATE);
+	init_idt_desc(13, 0x08, (u32)isr13, INTGATE); /* #GP */
+	init_idt_desc(14, 0x08, (u32)isr14, INTGATE); /* #PF */
+	init_idt_desc(15, 0x08, (u32)isr15, INTGATE);
+	init_idt_desc(16, 0x08, (u32)isr16, INTGATE);
+	init_idt_desc(17, 0x08, (u32)isr17, INTGATE);
+	init_idt_desc(18, 0x08, (u32)isr18, INTGATE);
+	init_idt_desc(19, 0x08, (u32)isr19, INTGATE);
+	init_idt_desc(20, 0x08, (u32)isr20, INTGATE);
+	init_idt_desc(21, 0x08, (u32)isr21, INTGATE);
+	init_idt_desc(22, 0x08, (u32)isr22, INTGATE);
+	init_idt_desc(23, 0x08, (u32)isr23, INTGATE);
+	init_idt_desc(24, 0x08, (u32)isr24, INTGATE);
+	init_idt_desc(25, 0x08, (u32)isr25, INTGATE);
+	init_idt_desc(26, 0x08, (u32)isr26, INTGATE);
+	init_idt_desc(27, 0x08, (u32)isr27, INTGATE);
+	init_idt_desc(28, 0x08, (u32)isr28, INTGATE);
+	init_idt_desc(29, 0x08, (u32)isr29, INTGATE);
+	init_idt_desc(30, 0x08, (u32)isr30, INTGATE);
+	init_idt_desc(31, 0x08, (u32)isr31, INTGATE);
 	
-	init_idt_desc(0x08, (u32) _asm_schedule, INTGATE, &kidt[32]);
-	init_idt_desc(0x08, (u32) _asm_int_1, INTGATE, &kidt[33]);
+	init_idt_desc(32, 0x08, (u32)isr32, INTGATE); /* timer */
+	init_idt_desc(33, 0x08, (u32)isr33, INTGATE); /* keyboard */
 	
-	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[48]);
-	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[80]);
-	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[128]); //48
+	init_idt_desc(48, 0x08, (u32)isr48, TRAPGATE); /* syscalls */
+	init_idt_desc(80, 0x08, (u32)isr80, TRAPGATE); /* syscalls */
+	init_idt_desc(128, 0x08, (u32)isr128, TRAPGATE); /* syscalls */
+	
+	register_interrupt_handler(13, isr_GP_int);
+	register_interrupt_handler(14, isr_PF_int);
+	register_interrupt_handler(32, isr_schedule_int);
+	register_interrupt_handler(33, isr_keyboard_int);
+	//register_interrupt_handler(48, isr_syscalls_int);
+	register_interrupt_handler(128, isr_syscalls_int);
 	
 	kidtr.limite = IDTSIZE * 8;
 	kidtr.base = IDTBASE;
@@ -396,9 +434,18 @@ void init_pic(void)
 	io.outb(0xA1, 0x0);
 }
 
+void isr_handler(regs_t *regs)
+{
+	if (interrupt_handlers[regs->which_int]) {
+		interrupt_handlers[regs->which_int](regs);
+	} else {
+		io.print("[Kernel] Unhandled interrupt: %d\n", regs->which_int);
+	}
+}
+
 #define DEBUG_REG(a) io.print("  %s : %x",#a,p->regs.a)
 
-void schedule(){
+void schedule(regs_t* regs_ptr){
 	Process* pcurrent=arch.pcurrent;
 	Process*plist=arch.plist;
 	if (pcurrent==0)
@@ -411,44 +458,43 @@ void schedule(){
 	process_st *p;
 	int i, newpid;
 
-	/* Stocke dans stack_ptr le pointeur vers les registres sauvegardes */
-	asm("mov (%%ebp), %%eax; mov %%eax, %0": "=m"(stack_ptr):);
+	/* stack_ptr stores in the pointer to the backup registers */
+	stack_ptr = regs_ptr;
 	//asm("mov (%%eip), %%eax; mov %%eax, %0": "=m"(current->regs.eip):);
 	
 	//io.print("stack_ptr : %x \n",stack_ptr);
-		/* Sauver les registres du processus courant */
-		current->regs.eflags = stack_ptr[16];
-		current->regs.cs = stack_ptr[15];
-		current->regs.eip = stack_ptr[14];
-		current->regs.eax = stack_ptr[13];
-		current->regs.ecx = stack_ptr[12];
-		current->regs.edx = stack_ptr[11];
-		current->regs.ebx = stack_ptr[10];
-		current->regs.ebp = stack_ptr[8];
-		current->regs.esi = stack_ptr[7];
-		current->regs.edi = stack_ptr[6];
-		current->regs.ds = stack_ptr[5];
-		current->regs.es = stack_ptr[4];
-		current->regs.fs = stack_ptr[3];
-		current->regs.gs = stack_ptr[2];
+	/* save the records of the current process */
+	current->regs.eflags = regs_ptr->eflags;
+	current->regs.cs = regs_ptr->cs;
+	current->regs.eip = regs_ptr->eip;
+	current->regs.eax = regs_ptr->eax;
+	current->regs.ecx = regs_ptr->ecx;
+	current->regs.edx = regs_ptr->edx;
+	current->regs.ebx = regs_ptr->ebx;
+	current->regs.ebp = regs_ptr->ebp;
+	current->regs.esi = regs_ptr->esi;
+	current->regs.edi = regs_ptr->edi;
+	current->regs.ds = regs_ptr->ds;
+	current->regs.es = regs_ptr->es;
+	current->regs.fs = regs_ptr->fs;
+	current->regs.gs = regs_ptr->gs;
 
-	
-		/* 
-		 * Sauvegarde le contenu des registres de pile (ss, esp)
-		 * au moment de l'interruption. Necessaire car le processeur
-		 * empile ou non ces valeurs selon le contexte de l'interruption.
-		 */
-		if (current->regs.cs != 0x08) {	/* mode utilisateur */
-			current->regs.esp = stack_ptr[17];
-			current->regs.ss = stack_ptr[18];
-		} else {	/* pendant un appel systeme */
-			current->regs.esp = stack_ptr[9] + 12;	/* vaut : &stack_ptr[17] */
-			current->regs.ss = default_tss.ss0;
-		}
+	/* 
+	 * Sauvegarde le contenu des registres de pile (ss, esp)
+	 * au moment de l'interruption. Necessaire car le processeur
+	 * empile ou non ces valeurs selon le contexte de l'interruption.
+	 */
+	if (current->regs.cs != 0x08) {	/* user mode */
+		current->regs.esp = regs_ptr->user_esp;
+		current->regs.ss = regs_ptr->user_ss;
+	} else { /* during a system call */
+		current->regs.esp = regs_ptr->esp + 20;	/* regs_ptr->esp: which_int, +4: err_code, +8: eip, +12: cs, +16: eflags, +20: user_esp */
+		current->regs.ss = default_tss.ss0;
+	}
 
-		/* Sauver le TSS de l'ancien processus */
-		current->kstack.ss0 = default_tss.ss0;
-		current->kstack.esp0 = default_tss.esp0;
+	/* save the TSS of the old process */
+	current->kstack.ss0 = default_tss.ss0;
+	current->kstack.esp0 = default_tss.esp0;
 	
 	//io.print("schedule %s ",pcurrent->getName());
 	pcurrent=pcurrent->schedule();
@@ -527,7 +573,6 @@ void switch_to_task(process_st* current, int mode)
 	
 	
 	//io.print("switch to %x \n",current->regs.eip);
-
 	
 	asm("	mov %0, %%ss; \
 		mov %1, %%esp; \
@@ -553,7 +598,6 @@ void switch_to_task(process_st* current, int mode)
 		[KMODE] "i"(KERNELMODE), \
 		[mode] "g"(mode)
 	    );
-	
 }
 
 
