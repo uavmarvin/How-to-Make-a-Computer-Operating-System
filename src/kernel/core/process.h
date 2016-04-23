@@ -7,6 +7,7 @@
 #include <archprocess.h>	/* definition de process_st */
 
 #include <core/signal.h>
+#include <config.h>
 
 #include <runtime/buffer.h>
 

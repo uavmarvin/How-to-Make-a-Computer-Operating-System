@@ -1,12 +1,8 @@
 #include <os.h>
 #include <x86.h>
 
-/* Stack pointer */
-extern regs_t*		stack_ptr;
-
 /* Current cpu name */
 static char cpu_name[512] = "x86-noname";
-
 
 /* Detect the type of processor */
 char* Architecture::detect(){
@@ -32,7 +28,16 @@ void Architecture::init(){
 		 init_pic();
 	 
 	 io.print("Loading Task Register \n");
-		 asm("	movw $0x38, %ax; ltr %ax");	 
+		 asm("	movw $0x38, %ax; ltr %ax");
+		 
+	io.print("Configure Scheduler\n");
+	init_scheduler(200);
+	io.print("Configure Keyboard\n");
+	init_kbd();
+	io.print("Configure Page\n");
+	init_page();
+	io.print("Configure Syscall\n");
+	init_syscall();
 }
 
 /* Initialise the list of processus */
